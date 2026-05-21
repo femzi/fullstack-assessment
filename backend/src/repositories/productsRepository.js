@@ -6,10 +6,10 @@ async function listProducts({ q } = {}, client = pool) {
       SELECT id, sku, name, description, price, stock,
              created_at AS "createdAt", updated_at AS "updatedAt"
       FROM products
-      WHERE name ILIKE '%${q}%' OR sku ILIKE '%${q}%'
+      WHERE name ILIKE $1 OR sku ILIKE $1
       ORDER BY id ASC
     `;
-    const { rows } = await client.query(query);
+    const { rows } = await client.query(query, [`%${q}%`]);
     return rows;
   }
 
