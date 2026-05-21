@@ -38,7 +38,8 @@ async function getProductByIdForUpdate(productId, client) {
   const query = `
     SELECT id, sku, name, description, price, stock
     FROM products
-    WHERE id = $1
+    WHERE id = $1 
+    FOR UPDATE
   `;
   const { rows } = await client.query(query, [productId]);
   return rows[0] || null;
