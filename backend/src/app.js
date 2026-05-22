@@ -5,16 +5,17 @@ const productsRoutes = require("./routes/productsRoutes");
 const ordersRoutes = require("./routes/ordersRoutes");
 const paymentsRoutes = require("./routes/paymentsRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const { FRONTEND_ORIGIN } = require("./config/env");
 
 const app = express();
 
 app.use(
   cors({
-    origin: "*",
+    origin: FRONTEND_ORIGIN,
     credentials: true,
   }),
 );
-
+ 
 app.use(express.json());
 
 app.get("/health", (req, res) => {
