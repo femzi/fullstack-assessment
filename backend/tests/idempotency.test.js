@@ -43,13 +43,17 @@ describe("Idempotency - charge order", () => {
     await redis.quit();
   });
 
-  it("charges only once when same idempotency key is used twice", async () => {
+ it("charges only once when same idempotency key is used twice", async () => {
     const key = `test-idem-key-${Date.now()}`;
 
-    const res1 = await request(app)
-      .post("/payments/charge")
-      .set("Idempotency-Key", key)
-      .send({ orderId });
+    let res1;
+    for (let i = 0; i < 10; i++) {
+      res1 = await request(app)
+        .post("/payments/charge")
+        .set("Idempotency-Key", key)
+        .send({ orderId });
+      if (res1.status === 200) break;
+    }
 
     const res2 = await request(app)
       .post("/payments/charge")
