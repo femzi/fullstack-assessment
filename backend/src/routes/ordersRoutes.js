@@ -1,6 +1,6 @@
 const express = require("express");
 const ordersService = require("../services/ordersService");
-
+const requireAdmin = require("../middleware/requireAdmin");
 const router = express.Router();
 
 router.post("/", async (req, res, next) => {
@@ -17,7 +17,7 @@ router.post("/", async (req, res, next) => {
   }
 });
 
-router.get("/", async (req, res, next) => {
+router.get("/", requireAdmin, async (req, res, next) => {
   try {
     const limit = Number(req.query.limit) || 50;
     const offset = Number(req.query.offset) || 0;
