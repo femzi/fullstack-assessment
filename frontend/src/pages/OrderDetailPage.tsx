@@ -8,14 +8,18 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [paying, setPaying] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!id) return;
+    if (order?.status === "PAID" || order?.status === "FAILED") return;
+
     getOrder(id).then(setOrder);
 
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       getOrder(id).then(setOrder);
     }, 2000);
-  }, [id]);
+
+    return () => clearInterval(intervalId);
+  }, [id, order?.status]);
 
   if (!order) return <p>Loading order...</p>;
 
