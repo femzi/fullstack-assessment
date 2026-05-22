@@ -16,7 +16,7 @@ interface CartContextValue {
   total: number;
 }
 
-const CartContext = createContext<CartContextValue | undefined>(undefined);
+export const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
