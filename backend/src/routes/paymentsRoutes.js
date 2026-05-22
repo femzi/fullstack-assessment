@@ -1,5 +1,6 @@
 const express = require("express");
 const ordersService = require("../services/ordersService");
+const { WEBHOOK_SECRET } = require("../config/env");
 
 const router = express.Router();
 
@@ -16,6 +17,11 @@ router.post("/charge", async (req, res, next) => {
 
 router.post("/webhook", async (req, res, next) => {
   try {
+    const signature = req.header("X-Webhook-Secret");
+    if (!signature || signature !== WEBHOOK_SECRET) {
+      return res.status(401).json({ error: "Invalid webhook signature" });
+    }
+
     const { providerEventId, orderId, eventType, payload } = req.body;
     const result = await ordersService.processPaymentWebhook({
       providerEventId,
