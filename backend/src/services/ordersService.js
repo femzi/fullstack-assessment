@@ -87,44 +87,54 @@ async function chargeOrder({ orderId, idempotencyKey }) {
     }
   }
 
-  const order = await ordersRepository.getOrderById(orderId);
-  if (!order) {
-    const error = new Error("Order not found");
-    error.status = 404;
-    throw error;
-  }
+  return withTransaction(async (client) => {
+    const order = await ordersRepository.getOrderByIdForUpdate(orderId, client);
+    if (!order) {
+      const error = new Error("Order not found");
+      error.status = 404;
+      throw error;
+    }
 
-  if (order.status !== "PENDING") {
-    const error = new Error("Only pending orders can be charged");
-    error.status = 409;
-    throw error;
-  }
+    if (order.status !== "PENDING") {
+      const error = new Error("Only pending orders can be charged");
+      error.status = 409;
+      throw error;
+    }
 
-  const gatewayResponse = await paymentGateway.charge({
-    orderId: order.id,
-    amount: order.totalAmount,
-  });
+    const gatewayResponse = await paymentGateway.charge({
+      orderId: order.id,
+      amount: order.totalAmount,
+    });
 
-  const payment = await paymentsRepository.createPayment({
-    orderId: order.id,
-    amount: gatewayResponse.chargedAmount,
-    providerTxnId: gatewayResponse.providerTxnId,
-    status: "SUCCESS",
-    idempotencyKey,
-  });
-
-  const updatedOrder = await ordersRepository.markOrderAsPaid(order.id);
-
-  if (idempotencyKey) {
-    await redis.set(
-      `idem:${idempotencyKey}`,
-      JSON.stringify({ order: updatedOrder, payment }),
-      "EX",
-      3600,
+    const payment = await paymentsRepository.createPayment(
+      {
+        orderId: order.id,
+        amount: gatewayResponse.chargedAmount,
+        providerTxnId: gatewayResponse.providerTxnId,
+        status: "SUCCESS",
+        idempotencyKey,
+      },
+      client,
     );
-  }
 
-  return { order: updatedOrder, payment };
+    const updatedOrder = await ordersRepository.markOrderAsPaid(
+      order.id,
+      client,
+    );
+
+    const result = { order: updatedOrder, payment };
+
+    if (idempotencyKey) {
+      await redis.set(
+        `idem:${idempotencyKey}`,
+        JSON.stringify(result),
+        "EX",
+        3600,
+      );
+    }
+
+    return result;
+  });
 }
 
 async function processPaymentWebhook({
