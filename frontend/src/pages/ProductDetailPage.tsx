@@ -34,10 +34,7 @@ export default function ProductDetailPage() {
     <div className="page">
       <h1>{product.name}</h1>
       <p className="sku">{product.sku}</p>
-      <div
-        className="description"
-        dangerouslySetInnerHTML={{ __html: product.description }}
-      />
+   <p className="description">{product.description}</p>
       <p className="price">${product.price}</p>
       <p className="stock">
         {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
