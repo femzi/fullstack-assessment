@@ -59,8 +59,8 @@ export function updateProductAdmin(
   id: number,
   body: { price?: number; stock?: number; description?: string; name?: string },
 ): Promise<Product> {
-  const token =
-    localStorage.getItem("admin_token") ??
+ const token =
+    sessionStorage.getItem("admin_token") ??
     import.meta.env.VITE_ADMIN_TOKEN ??
     "";
   return request<Product>(`/admin/products/${id}`, {

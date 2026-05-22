@@ -6,11 +6,26 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Record<number, Partial<Product>>>({});
+  const [saveError, setSaveError] = useState<Record<number, string>>({});
+  const [authorized, setAuthorized] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!authorized) return;
     listOrdersAdmin().then(setOrders);
     listProducts().then(setProducts);
-  }, []);
+  }, [authorized]);
+
+  function login() {
+    if (!tokenInput.trim()) {
+      setAuthError("Please enter a token");
+      return;
+    }
+    sessionStorage.setItem("admin_token", tokenInput.trim());
+    setAuthorized(true);
+    setAuthError(null);
+  }
 
   function onChangeField(id: number, field: keyof Product, value: string) {
     setEditing((prev) => ({
@@ -21,19 +36,49 @@ export default function AdminPage() {
 
   async function save(p: Product) {
     const draft = editing[p.id] || {};
-    setProducts((current) =>
-      current.map((it) =>
-        it.id === p.id
-          ? { ...it, ...draft, price: String(draft.price ?? it.price) }
-          : it,
-      ),
+    setSaveError((prev) => ({ ...prev, [p.id]: "" }));
+    try {
+      const updated = await updateProductAdmin(p.id, {
+        price: draft.price !== undefined ? Number(draft.price) : undefined,
+        stock: draft.stock !== undefined ? Number(draft.stock) : undefined,
+        description: draft.description as string | undefined,
+        name: draft.name as string | undefined,
+      });
+      setProducts((current) =>
+        current.map((it) => (it.id === p.id ? updated : it)),
+      );
+      setEditing((prev) => {
+        const next = { ...prev };
+        delete next[p.id];
+        return next;
+      });
+    } catch (err) {
+      setSaveError((prev) => ({
+        ...prev,
+        [p.id]: err instanceof Error ? err.message : "Save failed",
+      }));
+    }
+  }
+
+  if (!authorized) {
+    return (
+      <div className="page">
+        <h1>Admin Login</h1>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxWidth: "300px" }}>
+          <input
+            type="password"
+            placeholder="Enter admin token"
+            value={tokenInput}
+            onChange={(e) => setTokenInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && login()}
+          />
+          <button className="primary" onClick={login}>
+            Login
+          </button>
+          {authError && <p style={{ color: "red" }}>{authError}</p>}
+        </div>
+      </div>
     );
-    await updateProductAdmin(p.id, {
-      price: draft.price !== undefined ? Number(draft.price) : undefined,
-      stock: draft.stock !== undefined ? Number(draft.stock) : undefined,
-      description: draft.description as string | undefined,
-      name: draft.name as string | undefined,
-    });
   }
 
   return (
@@ -53,8 +98,8 @@ export default function AdminPage() {
             </tr>
           </thead>
           <tbody>
-            {orders.map((o, idx) => (
-              <tr key={idx}>
+            {orders.map((o) => (
+              <tr key={o.id}>
                 <td>{o.id}</td>
                 <td>{o.customerId}</td>
                 <td>${o.totalAmount}</td>
@@ -69,8 +114,8 @@ export default function AdminPage() {
       <section>
         <h2>Products</h2>
         <ul className="admin-products">
-          {products.map((p, idx) => (
-            <li key={idx} className="admin-product">
+          {products.map((p) => (
+            <li key={p.id} className="admin-product">
               <input
                 type="text"
                 defaultValue={p.name}
@@ -93,6 +138,9 @@ export default function AdminPage() {
                 }
               />
               <button onClick={() => save(p)}>Save</button>
+              {saveError[p.id] && (
+                <p style={{ color: "red" }}>{saveError[p.id]}</p>
+              )}
             </li>
           ))}
         </ul>
