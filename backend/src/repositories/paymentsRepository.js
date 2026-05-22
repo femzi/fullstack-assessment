@@ -38,6 +38,7 @@ async function createWebhookEvent(
   const query = `
     INSERT INTO payment_events (provider_event_id, order_id, event_type, payload)
     VALUES ($1, $2, $3, $4)
+    ON CONFLICT (provider_event_id) DO NOTHING
     RETURNING id, provider_event_id AS "providerEventId", order_id AS "orderId",
               event_type AS "eventType", payload, created_at AS "createdAt"
   `;
@@ -47,7 +48,7 @@ async function createWebhookEvent(
     eventType,
     payload || {},
   ]);
-  return rows[0];
+  return rows[0] || null;
 }
 
 module.exports = {
