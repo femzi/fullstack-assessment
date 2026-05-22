@@ -143,18 +143,27 @@ async function processPaymentWebhook({
   eventType,
   payload,
 }) {
-  await paymentsRepository.createWebhookEvent({
-    providerEventId,
-    orderId,
-    eventType,
-    payload,
+  return withTransaction(async (client) => {
+    const event = await paymentsRepository.createWebhookEvent(
+      {
+        providerEventId,
+        orderId,
+        eventType,
+        payload,
+      },
+      client,
+    );
+
+    if (!event) {
+      return { accepted: true, duplicate: true };
+    }
+
+    if (eventType === "payment_succeeded") {
+      await ordersRepository.markOrderAsPaid(orderId, client);
+    }
+
+    return { accepted: true };
   });
-
-  if (eventType === "payment_succeeded") {
-    await ordersRepository.markOrderAsPaid(orderId);
-  }
-
-  return { accepted: true };
 }
 
 async function getOrderById(orderId) {
