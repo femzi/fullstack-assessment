@@ -7,8 +7,9 @@ export default function OrderDetailPage() {
   const { id } = useParams();
   const [order, setOrder] = useState<Order | null>(null);
   const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
- useEffect(() => {
+  useEffect(() => {
     if (!id) return;
     if (order?.status === "PAID" || order?.status === "FAILED") return;
 
@@ -24,10 +25,17 @@ export default function OrderDetailPage() {
   if (!order) return <p>Loading order...</p>;
 
   async function pay() {
+    if (paying) return;
     setPaying(true);
-    const result = await chargeOrder(order!.id);
-    setOrder(result.order);
-    setPaying(false);
+    setError(null);
+    try {
+      const result = await chargeOrder(order!.id);
+      setOrder(result.order);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Payment failed");
+    } finally {
+      setPaying(false);
+    }
   }
 
   return (
@@ -40,8 +48,8 @@ export default function OrderDetailPage() {
 
       <h2>Items</h2>
       <ul>
-        {(order.items || []).map((item, idx) => (
-          <li key={idx}>
+        {(order.items || []).map((item) => (
+          <li key={item.id}>
             {item.name} x {item.quantity} @ ${item.unitPrice}
           </li>
         ))}
@@ -50,17 +58,20 @@ export default function OrderDetailPage() {
       <h2>Payments</h2>
       {(order.payments || []).length === 0 && <p>No payments yet.</p>}
       <ul>
-        {(order.payments || []).map((p, idx) => (
-          <li key={idx}>
+        {(order.payments || []).map((p) => (
+          <li key={p.id}>
             {p.status} - ${p.amount} ({p.providerTxnId})
           </li>
         ))}
       </ul>
 
       {order.status === "PENDING" && (
-        <button className="primary" onClick={pay}>
-          {paying ? "Charging..." : "Pay now"}
-        </button>
+        <>
+          <button className="primary" onClick={pay} disabled={paying}>
+            {paying ? "Charging..." : "Pay now"}
+          </button>
+          {error && <p style={{ color: "red" }}>{error}</p>}
+        </>
       )}
     </div>
   );
