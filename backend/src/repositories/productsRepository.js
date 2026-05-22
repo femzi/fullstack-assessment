@@ -49,11 +49,16 @@ async function decrementStock(productId, quantity, client) {
   const query = `
     UPDATE products
     SET stock = stock - $2, updated_at = NOW()
-    WHERE id = $1
+    WHERE id = $1 AND stock >= $2
     RETURNING id, stock
   `;
   const { rows } = await client.query(query, [productId, quantity]);
-  return rows[0] || null;
+  if(!rows[0]) {
+    const error = new Error(`Insufficient stock for product ${productId}`);
+    error.status = 400; 
+    throw error;
+  }
+  return rows[0] ;
 }
 
 async function createProduct({ sku, name, description, price, stock }) {
