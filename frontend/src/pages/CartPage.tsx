@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../state/CartContext";
 import { createOrder } from "../api";
@@ -8,6 +8,19 @@ export default function CartPage() {
   const navigate = useNavigate();
   const [checkingOut, setCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const mergedItems = useMemo(() => {
+    const map = new Map<number, typeof items[number]>();
+    for (const item of items) {
+      const existing = map.get(item.productId);
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        map.set(item.productId, { ...item });
+      }
+    }
+    return Array.from(map.values());
+  }, [items]);
 
   async function checkout() {
     if (items.length === 0 || checkingOut) return;
@@ -44,7 +57,7 @@ export default function CartPage() {
     <div className="page">
       <h1>Cart</h1>
       <ul className="cart-list">
-        {items.map((item) => (
+        {mergedItems.map((item) => (
           <li key={item.productId} className="cart-item">
             <span>{item.name}</span>
             <span>

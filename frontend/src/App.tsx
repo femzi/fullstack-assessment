@@ -8,7 +8,7 @@ import { useCart } from "./state/CartContext";
 
 export default function App() {
   const { items } = useCart();
-  const cartCount = items.reduce((s, i) => s + i.quantity, 0);
+  const cartCount = items.length ||`0`;
 
   return (
     <div className="app">
