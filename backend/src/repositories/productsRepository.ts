@@ -1,6 +1,6 @@
-const pool = require("../db/postgres");
+import pool from "../db/postgres";
 
-async function listProducts({ q } = {}, client = pool) {
+async function listProducts({ q }: { q?: string } = {}, client = pool) {
   if (q) {
     const query = `
       SELECT id, sku, name, description, price, stock,
@@ -54,8 +54,8 @@ async function decrementStock(productId, quantity, client) {
   `;
   const { rows } = await client.query(query, [productId, quantity]);
   if(!rows[0]) {
-    const error = new Error(`Insufficient stock for product ${productId}`);
-    error.status = 400; 
+ const error: any = new Error(`Insufficient stock for product ${productId}`);
+    error.status = 409;
     throw error;
   }
   return rows[0] ;
@@ -100,7 +100,7 @@ async function updateProduct(productId, { price, stock, description, name }) {
   return rows[0] || null;
 }
 
-module.exports = {
+export { 
   listProducts,
   getProductById,
   getProductByIdForUpdate,

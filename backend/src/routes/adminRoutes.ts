@@ -1,6 +1,7 @@
-const express = require("express");
-const productsRepository = require("../repositories/productsRepository");
-const requireAdmin = require("../middleware/requireAdmin");
+import express from "express";
+import * as productsRepository from "../repositories/productsRepository";
+import requireAdmin from "../middleware/requireAdmin";
+
 const router = express.Router();
 
 router.use(requireAdmin);
@@ -44,4 +45,4 @@ router.patch("/products/:id", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

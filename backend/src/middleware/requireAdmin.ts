@@ -1,4 +1,4 @@
-const { ADMIN_TOKEN } = require("../config/env");
+import { ADMIN_TOKEN } from "../config/env";
 
 function requireAdmin(req, res, next) {
   const auth = req.headers.authorization;
@@ -12,4 +12,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = requireAdmin;
+export default requireAdmin;

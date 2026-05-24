@@ -1,6 +1,7 @@
-const express = require("express");
-const ordersService = require("../services/ordersService");
-const requireAdmin = require("../middleware/requireAdmin");
+import express from "express";
+import * as ordersService from "../services/ordersService";
+import requireAdmin from "../middleware/requireAdmin";
+
 const router = express.Router();
 
 router.post("/", async (req, res, next) => {
@@ -37,4 +38,4 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

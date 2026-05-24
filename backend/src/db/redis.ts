@@ -1,5 +1,5 @@
-const Redis = require("ioredis");
-const { REDIS_URL } = require("../config/env");
+import Redis from "ioredis";
+import { REDIS_URL } from "../config/env";
 
 const redis = new Redis(REDIS_URL, {
   maxRetriesPerRequest: 2,
@@ -10,4 +10,4 @@ redis.on("error", (err) => {
   console.error("Redis error", err.message);
 });
 
-module.exports = redis;
+export default redis;

@@ -1,11 +1,14 @@
-const ordersRepository = require("../repositories/ordersRepository");
-const productsRepository = require("../repositories/productsRepository");
-const paymentsRepository = require("../repositories/paymentsRepository");
-const paymentGateway = require("./paymentGateway");
-const redis = require("../db/redis");
-const db = require("../db/postgres");
+import * as ordersRepository from "../repositories/ordersRepository";
+import * as productsRepository from "../repositories/productsRepository";
+import * as paymentsRepository from "../repositories/paymentsRepository";
+import * as paymentGateway from "./paymentGateway";
+import redis from "../db/redis";
+import db from "../db/postgres";
 
-async function withTransaction(callback) {
+const makeError = (message: string, status: number): any =>
+  Object.assign(new Error(message), { status });
+
+async function withTransaction(callback: (client: any) => Promise<any>) {
   const client = await db.connect();
   try {
     await client.query("BEGIN");
@@ -20,15 +23,13 @@ async function withTransaction(callback) {
   }
 }
 
-async function createOrder({ customerId, items, totalAmount }) {
+async function createOrder({ customerId, items, totalAmount }: any) {
   if (!customerId || !Array.isArray(items) || items.length === 0) {
-    const error = new Error("customerId and items are required");
-    error.status = 400;
-    throw error;
+    throw makeError("customerId and items are required", 400);
   }
 
   return withTransaction(async (client) => {
-    const enrichedItems = [];
+    const enrichedItems: any[] = [];
 
     for (const item of items) {
       const product = await productsRepository.getProductByIdForUpdate(
@@ -36,14 +37,10 @@ async function createOrder({ customerId, items, totalAmount }) {
         client,
       );
       if (!product) {
-        const error = new Error(`Product ${item.productId} not found`);
-        error.status = 404;
-        throw error;
+        throw makeError(`Product ${item.productId} not found`, 404);
       }
       if (product.stock < item.quantity) {
-        const error = new Error(`Insufficient stock for ${product.name}`);
-        error.status = 409;
-        throw error;
+        throw makeError(`Insufficient stock for ${product.name}`, 409);
       }
       enrichedItems.push({
         productId: product.id,
@@ -62,7 +59,7 @@ async function createOrder({ customerId, items, totalAmount }) {
     }
 
     const calculatedTotal = enrichedItems.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
+      (sum: number, item: any) => sum + item.unitPrice * item.quantity,
       0,
     );
 
@@ -79,7 +76,7 @@ async function createOrder({ customerId, items, totalAmount }) {
   });
 }
 
-async function chargeOrder({ orderId, idempotencyKey }) {
+async function chargeOrder({ orderId, idempotencyKey }: any) {
   if (idempotencyKey) {
     const cached = await redis.get(`idem:${idempotencyKey}`);
     if (cached) {
@@ -90,15 +87,11 @@ async function chargeOrder({ orderId, idempotencyKey }) {
   return withTransaction(async (client) => {
     const order = await ordersRepository.getOrderByIdForUpdate(orderId, client);
     if (!order) {
-      const error = new Error("Order not found");
-      error.status = 404;
-      throw error;
+      throw makeError("Order not found", 404);
     }
 
     if (order.status !== "PENDING") {
-      const error = new Error("Only pending orders can be charged");
-      error.status = 409;
-      throw error;
+      throw makeError("Only pending orders can be charged", 409);
     }
 
     const gatewayResponse = await paymentGateway.charge({
@@ -137,12 +130,7 @@ async function chargeOrder({ orderId, idempotencyKey }) {
   });
 }
 
-async function processPaymentWebhook({
-  providerEventId,
-  orderId,
-  eventType,
-  payload,
-}) {
+async function processPaymentWebhook({ providerEventId, orderId, eventType, payload }: any) {
   return withTransaction(async (client) => {
     const event = await paymentsRepository.createWebhookEvent(
       {
@@ -166,21 +154,19 @@ async function processPaymentWebhook({
   });
 }
 
-async function getOrderById(orderId) {
+async function getOrderById(orderId: any) {
   const order = await ordersRepository.getOrderWithDetails(orderId);
   if (!order) {
-    const error = new Error("Order not found");
-    error.status = 404;
-    throw error;
+    throw makeError("Order not found", 404);
   }
   return order;
 }
 
-async function listOrders(params) {
+async function listOrders(params: any) {
   return ordersRepository.listOrders(params);
 }
 
-module.exports = {
+export {
   createOrder,
   chargeOrder,
   processPaymentWebhook,

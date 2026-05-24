@@ -1,10 +1,10 @@
-const request = require("supertest");
-const app = require("../src/app");
-const pool = require("../src/db/postgres");
-const redis = require("../src/db/redis");
+import request from "supertest";
+import app from "../src/app";
+import pool from "../src/db/postgres";
+import redis from "../src/db/redis";
 
 describe("Concurrency - oversell protection", () => {
-  let productId;
+  let productId: number;
 
   beforeEach(async () => {
     await pool.query(
@@ -26,7 +26,7 @@ describe("Concurrency - oversell protection", () => {
     productId = rows[0].id;
   });
 
- afterAll(async () => {
+  afterAll(async () => {
     await pool.query(
       "DELETE FROM order_items USING orders WHERE order_items.order_id = orders.id AND orders.customer_id = $1",
       ["test_customer"],

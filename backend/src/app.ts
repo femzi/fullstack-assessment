@@ -1,11 +1,11 @@
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import cors from "cors";
 
-const productsRoutes = require("./routes/productsRoutes");
-const ordersRoutes = require("./routes/ordersRoutes");
-const paymentsRoutes = require("./routes/paymentsRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const { FRONTEND_ORIGIN } = require("./config/env");
+import productsRoutes from "./routes/productsRoutes";
+import ordersRoutes from "./routes/ordersRoutes";
+import paymentsRoutes from "./routes/paymentsRoutes";
+import adminRoutes from "./routes/adminRoutes";
+import { FRONTEND_ORIGIN } from "./config/env";
 
 const app = express();
 
@@ -34,5 +34,4 @@ app.use((error, req, res, next) => {
     error: error.message || "Internal server error",
   });
 });
-
-module.exports = app;
+export default app;

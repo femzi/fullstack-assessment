@@ -1,16 +1,24 @@
-const request = require("supertest");
-const app = require("../src/app");
-const pool = require("../src/db/postgres");
-const redis = require("../src/db/redis");
+import request from "supertest";
+import app from "../src/app";
+import pool from "../src/db/postgres";
+import redis from "../src/db/redis";
 
 describe("Idempotency - charge order", () => {
-  let orderId;
-  let productId;
+  let orderId: number;
+  let productId: number;
 
   beforeEach(async () => {
-    await pool.query("DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE customer_id = $1)", ["test_customer"]);
-    await pool.query("DELETE FROM order_items USING orders WHERE order_items.order_id = orders.id AND orders.customer_id = $1", ["test_customer"]);
-    await pool.query("DELETE FROM orders WHERE customer_id = $1", ["test_customer"]);
+    await pool.query(
+      "DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE customer_id = $1)",
+      ["test_customer"],
+    );
+    await pool.query(
+      "DELETE FROM order_items USING orders WHERE order_items.order_id = orders.id AND orders.customer_id = $1",
+      ["test_customer"],
+    );
+    await pool.query("DELETE FROM orders WHERE customer_id = $1", [
+      "test_customer",
+    ]);
     await pool.query("DELETE FROM products WHERE sku = $1", ["TEST-IDEM"]);
 
     const { rows: productRows } = await pool.query(
@@ -35,18 +43,26 @@ describe("Idempotency - charge order", () => {
   });
 
   afterAll(async () => {
-    await pool.query("DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE customer_id = $1)", ["test_customer"]);
-    await pool.query("DELETE FROM order_items USING orders WHERE order_items.order_id = orders.id AND orders.customer_id = $1", ["test_customer"]);
-    await pool.query("DELETE FROM orders WHERE customer_id = $1", ["test_customer"]);
+    await pool.query(
+      "DELETE FROM payments WHERE order_id IN (SELECT id FROM orders WHERE customer_id = $1)",
+      ["test_customer"],
+    );
+    await pool.query(
+      "DELETE FROM order_items USING orders WHERE order_items.order_id = orders.id AND orders.customer_id = $1",
+      ["test_customer"],
+    );
+    await pool.query("DELETE FROM orders WHERE customer_id = $1", [
+      "test_customer",
+    ]);
     await pool.query("DELETE FROM products WHERE sku = $1", ["TEST-IDEM"]);
     await pool.end();
     await redis.quit();
   });
 
- it("charges only once when same idempotency key is used twice", async () => {
+  it("charges only once when same idempotency key is used twice", async () => {
     const key = `test-idem-key-${Date.now()}`;
 
-    let res1;
+    let res1: any;
     for (let i = 0; i < 10; i++) {
       res1 = await request(app)
         .post("/payments/charge")

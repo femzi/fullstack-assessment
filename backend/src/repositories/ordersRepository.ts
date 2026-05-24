@@ -1,4 +1,4 @@
-const pool = require("../db/postgres");
+import pool from "../db/postgres";
 
 async function createOrder(
   { customerId, totalAmount, items },
@@ -111,7 +111,7 @@ async function getOrderWithDetails(orderId) {
   };
 }
 
-module.exports = {
+export {
   createOrder,
   listOrders,
   getOrderById,

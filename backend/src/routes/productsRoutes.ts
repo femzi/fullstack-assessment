@@ -1,11 +1,11 @@
-const express = require("express");
-const productsRepository = require("../repositories/productsRepository");
+import express from "express";
+import * as productsRepository from "../repositories/productsRepository";
 
 const router = express.Router();
 
 router.get("/", async (req, res, next) => {
   try {
-    const products = await productsRepository.listProducts({ q: req.query.q });
+   const products = await productsRepository.listProducts({ q: req.query.q as string | undefined });
     res.json(products);
   } catch (err) {
     next(err);
@@ -24,4 +24,4 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

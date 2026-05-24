@@ -1,8 +1,8 @@
-const {
+import {
   PAYMENT_FAILURE_RATE,
   PAYMENT_DELAY_MIN_MS,
   PAYMENT_DELAY_MAX_MS,
-} = require("../config/env");
+} from "../config/env";
 
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -17,9 +17,7 @@ async function charge({ orderId, amount }) {
   await delay(wait);
 
   if (Math.random() < PAYMENT_FAILURE_RATE) {
-    const err = new Error("Payment gateway declined");
-    err.status = 502;
-    throw err;
+   throw Object.assign(new Error("Payment gateway declined"), { status: 502 });
   }
 
   return {
@@ -30,4 +28,4 @@ async function charge({ orderId, amount }) {
   };
 }
 
-module.exports = { charge };
+export { charge };

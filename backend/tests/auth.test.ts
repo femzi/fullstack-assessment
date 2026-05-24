@@ -1,11 +1,11 @@
-const request = require("supertest");
-const app = require("../src/app");
-const pool = require("../src/db/postgres");
+import request from "supertest";
+import app from "../src/app";
+import pool from "../src/db/postgres";
+import redis from "../src/db/redis";
 
 describe("Admin auth", () => {
- afterAll(async () => {
+  afterAll(async () => {
     await pool.end();
-    const redis = require("../src/db/redis");
     await redis.quit();
   });
 
@@ -41,7 +41,6 @@ describe("Admin auth", () => {
       .send({ sku: "TEST-AUTH-001", name: "Auth Test", price: 9.99, stock: 1 });
     expect(res.status).toBe(201);
 
-  
     await pool.query("DELETE FROM products WHERE sku = $1", ["TEST-AUTH-001"]);
   });
 });

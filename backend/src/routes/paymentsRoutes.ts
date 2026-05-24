@@ -1,6 +1,6 @@
-const express = require("express");
-const ordersService = require("../services/ordersService");
-const { WEBHOOK_SECRET } = require("../config/env");
+import express from "express";
+import * as ordersService from "../services/ordersService";
+import { WEBHOOK_SECRET } from "../config/env";
 
 const router = express.Router();
 
@@ -35,4 +35,4 @@ router.post("/webhook", async (req, res, next) => {
   }
 });
 
-module.exports = router;
+export default router;

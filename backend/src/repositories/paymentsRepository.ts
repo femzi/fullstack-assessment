@@ -1,4 +1,4 @@
-const pool = require("../db/postgres");
+import pool from "../db/postgres";
 
 async function createPayment(
   { orderId, amount, providerTxnId, status, idempotencyKey },
@@ -51,7 +51,7 @@ async function createWebhookEvent(
   return rows[0] || null;
 }
 
-module.exports = {
+export {
   createPayment,
   findPaymentByIdempotencyKey,
   createWebhookEvent,
