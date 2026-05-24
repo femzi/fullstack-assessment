@@ -17,14 +17,35 @@ export default function AdminPage() {
     listProducts().then(setProducts);
   }, [authorized]);
 
-  function login() {
+  async function login() {
     if (!tokenInput.trim()) {
       setAuthError("Please enter a token");
       return;
     }
-    sessionStorage.setItem("admin_token", tokenInput.trim());
-    setAuthorized(true);
-    setAuthError(null);
+
+    const token = tokenInput.trim();
+    const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
+    try {
+      const response = await fetch(`${apiUrl}/orders`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        sessionStorage.setItem("admin_token", token);
+        setAuthorized(true);
+        setAuthError(null);
+      } else if (response.status === 401 || response.status === 403) {
+        setAuthError("Wrong token, please try again");
+      } else {
+        setAuthError("Login failed");
+      }
+    } catch (err) {
+      setAuthError("Login failed");
+    }
   }
 
   function onChangeField(id: number, field: keyof Product, value: string) {
