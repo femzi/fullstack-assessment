@@ -22,22 +22,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   const add = useCallback((product: Product, quantity = 1) => {
+    const productId = Number(product.id);
+    const quantityToAdd = Number(quantity) || 1;
+
     setItems((current) => {
-      const existing = current.find((i) => i.productId === product.id);
+      const existing = current.find((i) => i.productId === productId);
       if (existing) {
-        return current.map((i) =>
-          i.productId === product.id
-            ? { ...i, quantity: i.quantity + quantity }
-            : i,
-        );
+        return current;
       }
       return [
         ...current,
         {
-          productId: product.id,
+          productId,
           name: product.name,
           price: parseFloat(product.price),
-          quantity,
+          quantity: quantityToAdd,
         },
       ];
     });
